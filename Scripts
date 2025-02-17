@@ -1,1 +1,37 @@
+// Script a ser inserido no Google Earth Engine [https://code.earthengine.google.com]
+// 1️⃣ Definir a área de interesse (AOI) com base nas coordenadas fornecidas
+var geometry = ee.Geometry.Polygon([
+  [
+    [-50.91689144766028, -18.28999653795835],
+    [-47.21449886953528, -18.28999653795835],
+    [-47.21449886953528, -14.496516519266788],
+    [-50.91689144766028, -14.496516519266788],
+    [-50.91689144766028, -18.28999653795835]
+  ]
+]);
+
+// 2️⃣ Filtrar imagens do Landsat 8 para a área definida
+var collection = ee.ImageCollection("LANDSAT/LC08/C02/T1_TOA")
+  .filterBounds(geometry)              // Apenas imagens que cobrem a AOI
+  .filterDate('2023-01-01', '2023-12-31')  // Ano de 2023 (ajuste se necessário)
+  .filter(ee.Filter.lt('CLOUD_COVER', 10)) // Apenas imagens com menos de 10% de nuvens
+  .median(); // Faz a composição média das imagens
+
+// 3️⃣ Recortar a imagem final para a área definida e converte todas as bandas para Float32
+var img = collection.clip(geometry);
+var imgFloat32 = img.toFloat(); 
+
+// 4️⃣ Exportar para o Google Drive como GeoTIFF
+Export.image.toDrive({
+  image: imgFloat32,
+  description: 'Landsat8_AOI',
+  scale: 30,
+  region: geometry,
+  fileFormat: 'GeoTIFF',
+  maxPixels: 1e13
+});
+
+
+
+print("✅ Exportação para o Google Drive iniciada!");
 
